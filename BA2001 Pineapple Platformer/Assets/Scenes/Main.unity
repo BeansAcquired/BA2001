@@ -215,7 +215,7 @@ BoxCollider2D:
   m_GameObject: {fileID: 24276202}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: dd276ffbdd90d4045bbb64a90cb30295, type: 2}
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
@@ -268,8 +268,16 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   GroundCheck: {fileID: 609762547}
-  _jumpForce: 40
-  _movementSmoothing: 0.05
+  _groundedRadius: 0.2
+  JumpVelocity: 7
+  BaseSpeed: 20
+  FallMultiplier: 0.5
+  SprintMultiplier: 1.5
+  MovementSmoothing: 0.3
+  JumpDelay: 0.25
+  JumpTimer: 0
+  GroundedDelay: 0.25
+  GroundedTimer: 0
 --- !u!50 &417273978
 Rigidbody2D:
   serializedVersion: 4
@@ -287,8 +295,8 @@ Rigidbody2D:
   m_AngularDrag: 0.05
   m_GravityScale: 1
   m_Material: {fileID: 0}
-  m_Interpolate: 0
-  m_SleepingMode: 1
+  m_Interpolate: 1
+  m_SleepingMode: 0
   m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!212 &417273979
@@ -591,7 +599,7 @@ BoxCollider2D:
   m_GameObject: {fileID: 1099652894}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: dd276ffbdd90d4045bbb64a90cb30295, type: 2}
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
@@ -733,7 +741,7 @@ BoxCollider2D:
   m_GameObject: {fileID: 1918533127}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: dd276ffbdd90d4045bbb64a90cb30295, type: 2}
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0

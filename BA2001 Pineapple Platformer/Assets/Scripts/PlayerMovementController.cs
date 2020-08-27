@@ -5,59 +5,85 @@ using UnityEngine;
 
 public class PlayerMovementController : MonoBehaviour
 {
-    #region Properties
-    [SerializeField] private LayerMask GroundLayer;                          // A mask determining what is ground to the character
-    [SerializeField] private Transform GroundCheck;                           // A position marking where to check if the player is grounded.
 
-    // Private
+    #region Properties
+    // Editor
+    [Header("Collision Detection")] 
+    public LayerMask GroundLayer;
+    public Transform GroundCheck;
+    public float _groundedRadius = .2f; // Radius of the circle to determine if grounded
+
+
+    [Header("Physics")]
+    public float JumpVelocity = 5f;
+    public float BaseSpeed = 10f;
+    [Range(0, 1f)]
+    public float FallMultiplier = 0.5f;
+    public float SprintMultiplier = 1.5f;
+
+    [Header("Movement & Input")]
+    [Range(0, .3f)]
+    public float MovementSmoothing = .05f;	// How much to smooth out the movement
+    public float JumpDelay = 0.25f;
+    public float JumpTimer;
+    public float GroundedDelay = 0.25f;
+    public float GroundedTimer;
+
     private Rigidbody2D _rigidbody;
     private float _horizontalMove = 0f;
-    private bool _isJumping = false;
     private bool _isSprinting = false;
-    private bool _isGrounded;
-    private bool _canJump = false;
-
+    private bool _isGrounded = false;
+    private Vector3 _velocity = Vector3.zero;
 
     private float Speed
     {
         get
         {
             return _isSprinting
-                ? _baseSpeed * _sprintMultiplier
-                : _baseSpeed;
+                ? BaseSpeed * SprintMultiplier
+                : BaseSpeed;
         }
     }
 
-    // Configuration
-    public float _jumpForce = 40f;
-    private float _baseSpeed = 40f;
-    private float _sprintMultiplier = 1.5f; // Speed multiplier while sprinting
-    private float _groundedRadius = .2f; // Radius of the circle to determine if grounded
-    private float _fallMultiplier = 2.5f; // Radius of the circle to determine if grounded
-    private float _lowJumpMultiplier = 2f; // Radius of the circle to determine if grounded
-
-    [Range(0, .3f)]
-    [SerializeField]
-    private float _movementSmoothing = .05f;	// How much to smooth out the movement
-    private Vector3 _velocity = Vector3.zero;
-
+    
     #endregion
 
     private void Start()
     {
-        Trace.Info("Start", this);
+        Trace.Start();
         _rigidbody = GetComponent<Rigidbody2D>();
     }
 
     // Get input in Update
     private void Update()
     {
-        _horizontalMove = Input.GetAxisRaw("Horizontal") * Speed;
+        CheckGrounded();
+        _horizontalMove = Input.GetAxisRaw("Horizontal");
 
-        if (Input.GetButtonDown("Jump") && _isGrounded)
+        // Jump
+
+        JumpTimer -= Time.deltaTime;
+        GroundedTimer -= Time.deltaTime;
+
+        if (Input.GetButtonDown("Jump"))
         {
-            _isJumping = true;
+            JumpTimer = Time.deltaTime + JumpDelay;
         }
+
+        if (Input.GetButtonUp("Jump"))
+        {
+            if (_rigidbody.velocity.y > 0)
+            {
+                _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, _rigidbody.velocity.y * FallMultiplier);
+            }
+        }
+
+        
+        if (_isGrounded)
+        {
+            GroundedTimer = Time.deltaTime + GroundedDelay;
+        }
+
         _isSprinting = Input.GetButton("Sprint");
        
     }
@@ -65,8 +91,13 @@ public class PlayerMovementController : MonoBehaviour
     // Apply physics in FixedUpdate
     private void FixedUpdate()
     {
-        CheckGrounded();
-        Move();
+       Move();
+
+        // Jump
+        if (JumpTimer > 0 && GroundedTimer > 0)
+        {
+            Jump();
+        }
     }
 
     private void Move()
@@ -76,36 +107,22 @@ public class PlayerMovementController : MonoBehaviour
         Vector3 targetVelocity = new Vector2(_horizontalMove * Time.fixedDeltaTime * 10f, _rigidbody.velocity.y);
 
         // Apply and smooth
-        _rigidbody.velocity = Vector3.SmoothDamp(_rigidbody.velocity, targetVelocity, ref _velocity, _movementSmoothing);
+        _rigidbody.velocity = Vector3.SmoothDamp(_rigidbody.velocity, targetVelocity, ref _velocity, MovementSmoothing);
+    }
 
-        if(_isGrounded && _isJumping)
+    private void Jump()
+    {
+        if (JumpTimer > 0 && GroundedTimer > 0)
         {
-            Trace.Log("Jump!");
-            _rigidbody.AddForce(new Vector2(0f, _jumpForce * 10f));
-            if (_rigidbody.velocity.y < 0)
-            {
-                _rigidbody.velocity += Vector2.up * Physics2D.gravity.y * (_fallMultiplier - 1) * Time.fixedDeltaTime;
-            }
-            else if (_rigidbody.velocity.y > 0 && !Input.GetButton("Jump"))
-            {
-                _rigidbody.velocity += Vector2.up * Physics2D.gravity.y * (_lowJumpMultiplier - 1) * Time.fixedDeltaTime;
-            }
-            _isJumping = false;
+            _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, JumpVelocity);
+            JumpTimer = 0;
+            GroundedTimer = 0;
         }
     }
 
     private void CheckGrounded()
     {
-        //bool wasGrounded = _isGrounded;
-        _isGrounded = false;
-
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(GroundCheck.position, _groundedRadius, GroundLayer);
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            if (colliders[i].gameObject != gameObject)
-            {
-                _isGrounded = true;
-            }
-        }
+        _isGrounded = Physics2D.OverlapCircle(GroundCheck.position, _groundedRadius, GroundLayer);
+        
     }
 }
